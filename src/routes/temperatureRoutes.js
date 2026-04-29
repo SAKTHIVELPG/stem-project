@@ -60,3 +60,10 @@ const simulateSpike = (req, res) => {
 };
 
 module.exports = { router, simulateSpike };
+// AUTO COOL DOWN
+setInterval(() => {
+  if (!isSpiking && latestTemperature > 26.8) {
+    latestTemperature -= 1;
+    addTemperature(latestTemperature);
+  }
+}, 2000);
