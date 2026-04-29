@@ -14,7 +14,7 @@ app.get("/health", (req, res) => {
 });
 
 app.use("/api/temperature", temperatureRoutes);
-app.post("/api/simulate-spike", simulateSpike);
+app.get("/api/simulate-spike", simulateSpike);
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on port ${PORT}`);
