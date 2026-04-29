@@ -1,52 +1,63 @@
 const express = require("express");
 const router = express.Router();
 
+let latestTemperature = 26.8;
 let temperatureHistory = [];
 
+let isSpiking = false;
+
+// 📊 ADD TO HISTORY
 const addTemperature = (value) => {
-  const data = {
+  temperatureHistory.push({
     value,
     time: new Date(),
-  };
-
-  temperatureHistory.push(data);
+  });
 
   if (temperatureHistory.length > 20) {
     temperatureHistory.shift();
   }
 };
 
-let latestTemperature = 26.8;
+// INITIAL VALUE
 addTemperature(latestTemperature);
 
-// GET CURRENT + HISTORY
+// 📡 GET DATA
 router.get("/", (req, res) => {
   res.json({
     temperature: latestTemperature,
     history: temperatureHistory,
     status: "normal",
-    timestamp: new Date(),
   });
 });
 
-// UPDATE TEMP
-router.post("/", (req, res) => {
-  const { temperature } = req.body;
-
-  latestTemperature = temperature;
-  addTemperature(temperature);
-
-  res.json({ message: "Temperature updated" });
-});
-
-// SIMULATE SPIKE
+// ⚡ REAL-TIME SPIKE
 const simulateSpike = (req, res) => {
-  latestTemperature = 80;
-  addTemperature(80);
+  if (isSpiking) {
+    return res.json({ message: "Already spiking" });
+  }
 
-  console.log("⚠️ SPIKE TRIGGERED");
+  isSpiking = true;
 
-  res.json({ message: "Spike simulated" });
+  let temp = latestTemperature;
+
+  console.log("⚡ Starting spike...");
+
+  const interval = setInterval(() => {
+    if (temp >= 80) {
+      clearInterval(interval);
+      isSpiking = false;
+      console.log("✅ Spike finished");
+      return;
+    }
+
+    temp += 2;
+    latestTemperature = temp;
+    addTemperature(temp);
+
+    console.log("Temp:", temp);
+  }, 1000);
+
+  res.json({ message: "Spike started" });
 };
 
 module.exports = { router, simulateSpike };
