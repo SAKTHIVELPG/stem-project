@@ -1,16 +1,16 @@
 const express = require("express");
 const cors = require("cors");
-require("dotenv").config();
+
 const { router: temperatureRoutes, simulateSpike } = require("./routes/temperatureRoutes");
 const alertRoutes = require("./routes/alertRoutes");
 
-const PORT = process.env.PORT || 5000;
 const app = express();
+const PORT = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
 
-app.get("/health", (_req, res) => {
+app.get("/health", (req, res) => {
   res.send("server running");
 });
 
