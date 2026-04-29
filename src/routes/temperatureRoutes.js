@@ -6,7 +6,7 @@ let temperatureHistory = [];
 
 let isSpiking = false;
 
-// 📊 ADD TO HISTORY
+// Store history
 const addTemperature = (value) => {
   temperatureHistory.push({
     value,
@@ -18,10 +18,9 @@ const addTemperature = (value) => {
   }
 };
 
-// INITIAL VALUE
 addTemperature(latestTemperature);
 
-// 📡 GET DATA
+// GET API
 router.get("/", (req, res) => {
   res.json({
     temperature: latestTemperature,
@@ -30,17 +29,17 @@ router.get("/", (req, res) => {
   });
 });
 
-// ⚡ REAL-TIME SPIKE
+// REAL SPIKE (BACKGROUND)
 const simulateSpike = (req, res) => {
   if (isSpiking) {
-    return res.json({ message: "Already spiking" });
+    return res.json({ message: "Already running" });
   }
 
   isSpiking = true;
 
   let temp = latestTemperature;
 
-  console.log("⚡ Starting spike...");
+  console.log("⚡ Spike started");
 
   const interval = setInterval(() => {
     if (temp >= 80) {
