@@ -67,8 +67,10 @@ const simulateSpike = (req, res) => {
     latestTemperature = temp;
     addTemperature(temp);
 
-    // EMAIL ALERT
+    console.log("Temp:", temp);
+
     if (temp >= alertThreshold && !emailSent && alertEmail) {
+      console.log("Sending email...");
       sendAlertEmail(alertEmail, temp);
       emailSent = true;
     }
