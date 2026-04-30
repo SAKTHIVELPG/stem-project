@@ -7,13 +7,13 @@ let temperatureHistory = [];
 
 let isSpiking = false;
 
-// 🔥 ALERT SETTINGS
+// ALERT SETTINGS
 let alertEmail = "";
 let alertThreshold = 50;
 let emailSent = false;
 
-// 📊 STORE HISTORY
-const addTemperature = (value) => {
+// STORE HISTORY
+function addTemperature(value) {
   temperatureHistory.push({
     value,
     time: new Date(),
@@ -22,12 +22,12 @@ const addTemperature = (value) => {
   if (temperatureHistory.length > 20) {
     temperatureHistory.shift();
   }
-};
+}
 
 // INITIAL VALUE
 addTemperature(latestTemperature);
 
-// 📡 GET DATA
+// GET DATA
 router.get("/", (req, res) => {
   res.json({
     temperature: latestTemperature,
@@ -36,7 +36,7 @@ router.get("/", (req, res) => {
   });
 });
 
-// ⚙️ SET ALERT
+// SET ALERT
 router.post("/set-alert", (req, res) => {
   const { email, threshold } = req.body;
 
@@ -44,10 +44,10 @@ router.post("/set-alert", (req, res) => {
   alertThreshold = Number(threshold);
   emailSent = false;
 
-  res.json({ message: "Alert configured" });
+  res.json({ message: "Alert set" });
 });
 
-// ⚡ SPIKE SIMULATION
+// SPIKE
 const simulateSpike = (req, res) => {
   if (isSpiking) {
     return res.json({ message: "Already spiking" });
@@ -67,17 +67,18 @@ const simulateSpike = (req, res) => {
     latestTemperature = temp;
     addTemperature(temp);
 
-    // 🚨 EMAIL ALERT
+    // EMAIL ALERT
     if (temp >= alertThreshold && !emailSent && alertEmail) {
       sendAlertEmail(alertEmail, temp);
       emailSent = true;
     }
+
   }, 1000);
 
   res.json({ message: "Spike started" });
 };
 
-// ❄️ AUTO COOL DOWN
+// COOL DOWN
 setInterval(() => {
   if (!isSpiking && latestTemperature > 26.8) {
     latestTemperature -= 1;
