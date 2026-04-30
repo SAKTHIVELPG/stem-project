@@ -1,12 +1,18 @@
 const express = require("express");
 const router = express.Router();
+const { sendAlertEmail } = require("../services/emailService");
 
 let latestTemperature = 26.8;
 let temperatureHistory = [];
 
 let isSpiking = false;
 
-// Store history
+// 🔥 ALERT SETTINGS
+let alertEmail = "";
+let alertThreshold = 50;
+let emailSent = false;
+
+// 📊 STORE HISTORY
 const addTemperature = (value) => {
   temperatureHistory.push({
     value,
@@ -18,9 +24,10 @@ const addTemperature = (value) => {
   }
 };
 
+// INITIAL VALUE
 addTemperature(latestTemperature);
 
-// GET API
+// 📡 GET DATA
 router.get("/", (req, res) => {
   res.json({
     temperature: latestTemperature,
@@ -29,23 +36,30 @@ router.get("/", (req, res) => {
   });
 });
 
-// REAL SPIKE (BACKGROUND)
+// ⚙️ SET ALERT
+router.post("/set-alert", (req, res) => {
+  const { email, threshold } = req.body;
+
+  alertEmail = email;
+  alertThreshold = Number(threshold);
+  emailSent = false;
+
+  res.json({ message: "Alert configured" });
+});
+
+// ⚡ SPIKE SIMULATION
 const simulateSpike = (req, res) => {
   if (isSpiking) {
-    return res.json({ message: "Already running" });
+    return res.json({ message: "Already spiking" });
   }
 
   isSpiking = true;
-
   let temp = latestTemperature;
-
-  console.log("⚡ Spike started");
 
   const interval = setInterval(() => {
     if (temp >= 80) {
       clearInterval(interval);
       isSpiking = false;
-      console.log("✅ Spike finished");
       return;
     }
 
@@ -53,17 +67,22 @@ const simulateSpike = (req, res) => {
     latestTemperature = temp;
     addTemperature(temp);
 
-    console.log("Temp:", temp);
+    // 🚨 EMAIL ALERT
+    if (temp >= alertThreshold && !emailSent && alertEmail) {
+      sendAlertEmail(alertEmail, temp);
+      emailSent = true;
+    }
   }, 1000);
 
   res.json({ message: "Spike started" });
 };
 
-module.exports = { router, simulateSpike };
-// AUTO COOL DOWN
+// ❄️ AUTO COOL DOWN
 setInterval(() => {
   if (!isSpiking && latestTemperature > 26.8) {
     latestTemperature -= 1;
     addTemperature(latestTemperature);
   }
 }, 2000);
+
+module.exports = { router, simulateSpike };
