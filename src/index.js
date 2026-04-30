@@ -1,5 +1,7 @@
+
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
 
 const { router: temperatureRoutes, simulateSpike } = require("./routes/temperatureRoutes");
 
@@ -9,8 +11,11 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
+// 🔥 SERVE WEBSITE
+app.use(express.static(path.join(__dirname, "../public")));
+
 app.get("/health", (req, res) => {
-  res.send("server running");
+  res.send("Server running");
 });
 
 app.use("/api/temperature", temperatureRoutes);
