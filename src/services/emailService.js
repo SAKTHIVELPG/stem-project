@@ -14,12 +14,12 @@ const sendAlertEmail = async (to, temp) => {
       from: process.env.EMAIL_USER,
       to: to,
       subject: "🚨 Temperature Alert",
-      text: `Temperature exceeded! Current value: ${temp}°C`,
+      text: `Temperature exceeded threshold!\nCurrent value: ${temp}°C`,
     });
 
     console.log("Email sent to", to);
   } catch (err) {
-    console.error(err);
+    console.error("Email error:", err);
   }
 };
 
