@@ -1,4 +1,3 @@
-
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
@@ -11,7 +10,7 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-// 🔥 SERVE WEBSITE
+// 🔥 SERVE FRONTEND
 app.use(express.static(path.join(__dirname, "../public")));
 
 app.get("/health", (req, res) => {
