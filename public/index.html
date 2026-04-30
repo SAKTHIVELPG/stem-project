@@ -2,7 +2,6 @@
 <html>
 <head>
   <title>Temperature Monitor</title>
-
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
@@ -62,6 +61,7 @@
   <input id="threshold" placeholder="Threshold (e.g. 50)">
   <br>
   <button onclick="setAlert()">Save Alert</button>
+  <button onclick="testEmail()">🧪 Test Email</button>
 </div>
 
 <div class="card">
@@ -119,11 +119,19 @@ async function setAlert() {
 
   await fetch(API + "/api/temperature/set-alert", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json"
+    },
     body: JSON.stringify({ email, threshold })
   });
 
   alert("Alert saved");
+}
+
+// 🧪 TEST EMAIL BUTTON
+async function testEmail() {
+  await fetch(API + "/api/temperature/test-email");
+  alert("Test email triggered");
 }
 
 initChart();
