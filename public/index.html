@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Temperature Monitor</title>
+  <style>
+    body {
+      font-family: Arial;
+      background: #f5f7fa;
+      text-align: center;
+      padding: 30px;
+    }
+
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      margin: 10px auto;
+      width: 300px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    input {
+      padding: 10px;
+      margin: 5px;
+      width: 90%;
+    }
+
+    button {
+      padding: 10px;
+      margin: 10px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🌡️ Temperature Monitor</h1>
+
+  <div class="card">
+    <h2 id="temp">Loading...</h2>
+  </div>
+
+  <div class="card">
+    <h3>Set Alert</h3>
+    <input id="email" placeholder="Enter Email">
+    <input id="threshold" placeholder="Threshold (°C)">
+    <button onclick="setAlert()">Save Alert</button>
+  </div>
+
+  <div class="card">
+    <button onclick="spike()">Simulate Spike</button>
+  </div>
+
+<script>
+const API = "https://temp-log.onrender.com";
+
+async function fetchTemp() {
+  const res = await fetch(API + "/api/temperature");
+  const data = await res.json();
+
+  document.getElementById("temp").innerText =
+    "Temperature: " + data.temperature + " °C";
+}
+
+setInterval(fetchTemp, 1000);
+
+async function spike() {
+  await fetch(API + "/api/simulate-spike");
+}
+
+async function setAlert() {
+  const email = document.getElementById("email").value;
+  const threshold = document.getElementById("threshold").value;
+
+  await fetch(API + "/api/temperature/set-alert", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, threshold }),
+  });
+
+  alert("Alert saved!");
+}
+</script>
+
+</body>
+</html>
