@@ -4,18 +4,19 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 const sendAlertEmail = async (to, temp) => {
   try {
-    await resend.emails.send({
+    const response = await resend.emails.send({
       from: "onboarding@resend.dev",
-      to: to,
+      to: "arthurshelbyjr1708@gmail.com", // 🔥 FORCE YOUR EMAIL HERE
       subject: "🚨 Temperature Alert",
       html: `<h2>Temperature Alert</h2>
-             <p>Temperature exceeded threshold:</p>
+             <p>Temperature crossed threshold:</p>
              <b>${temp}°C</b>`,
     });
 
-    console.log("Email sent via Resend");
+    console.log("EMAIL RESPONSE:", response);
+
   } catch (err) {
-    console.error("Resend error:", err);
+    console.error("RESEND ERROR:", err);
   }
 };
 
