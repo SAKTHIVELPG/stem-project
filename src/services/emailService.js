@@ -1,29 +1,21 @@
-const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const sendAlertEmail = async (to, temp) => {
   try {
-    console.log("Sending email to:", to);
-    console.log("Using email:", process.env.EMAIL_USER);
-
-    const info = await transporter.sendMail({
-      from: process.env.EMAIL_USER,
+    await resend.emails.send({
+      from: "onboarding@resend.dev",
       to: to,
       subject: "🚨 Temperature Alert",
-      text: `Temperature exceeded threshold!\nCurrent value: ${temp}°C`,
+      html: `<h2>Temperature Alert</h2>
+             <p>Temperature exceeded threshold:</p>
+             <b>${temp}°C</b>`,
     });
 
-    console.log("SUCCESS:", info.response);
-
+    console.log("Email sent via Resend");
   } catch (err) {
-    console.error("EMAIL FAILED:", err.message);
+    console.error("Resend error:", err);
   }
 };
 
