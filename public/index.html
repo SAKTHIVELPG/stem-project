@@ -77,8 +77,6 @@
 const API = "https://temp-log.onrender.com";
 
 let chart;
-let labels = [];
-let dataPoints = [];
 
 function initChart() {
   const ctx = document.getElementById("chart");
@@ -86,12 +84,51 @@ function initChart() {
   chart = new Chart(ctx, {
     type: "line",
     data: {
-      labels: labels,
+      labels: [],
       datasets: [{
         label: "Temperature",
-        data: dataPoints,
+        data: [],
         borderColor: "blue",
         fill: false
       }]
     }
   });
+}
+
+async function fetchTemp() {
+  const res = await fetch(API + "/api/temperature");
+  const data = await res.json();
+
+  document.getElementById("temp").innerText =
+    "Temperature: " + data.temperature.toFixed(1) + " °C";
+
+  if (data.history) {
+    chart.data.labels = data.history.map((_, i) => i);
+    chart.data.datasets[0].data = data.history.map(item => item.value);
+    chart.update();
+  }
+}
+
+async function spike() {
+  await fetch(API + "/api/simulate-spike");
+}
+
+async function setAlert() {
+  const email = document.getElementById("email").value;
+  const threshold = document.getElementById("threshold").value;
+
+  await fetch(API + "/api/temperature/set-alert", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, threshold })
+  });
+
+  alert("Alert saved");
+}
+
+initChart();
+setInterval(fetchTemp, 1000);
+</script>
+
+</body>
+</html>
