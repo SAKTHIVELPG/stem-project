@@ -2,53 +2,96 @@
 <html>
 <head>
   <title>Temperature Monitor</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    body {
+      font-family: Arial;
+      background: #0f172a;
+      color: white;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .card {
+      background: #1e293b;
+      padding: 20px;
+      margin: 15px auto;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 400px;
+    }
+
+    input {
+      padding: 10px;
+      margin: 5px;
+      width: 80%;
+      border-radius: 5px;
+      border: none;
+    }
+
+    button {
+      padding: 10px;
+      margin: 10px;
+      background: #3b82f6;
+      border: none;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    canvas {
+      background: white;
+      border-radius: 10px;
+    }
+  </style>
 </head>
+
 <body>
 
-<h1>Temperature Monitor</h1>
+<h1>🔥 IoT Temperature Monitor</h1>
 
-<h2 id="temp">Loading...</h2>
+<div class="card">
+  <h2 id="temp">Loading...</h2>
+</div>
 
-<input id="email" placeholder="Enter Email">
-<input id="threshold" placeholder="Threshold (e.g. 50)">
-<button onclick="setAlert()">Set Alert</button>
+<div class="card">
+  <h3>📧 Alert Settings</h3>
+  <input id="email" placeholder="Enter Email">
+  <input id="threshold" placeholder="Threshold (e.g. 50)">
+  <br>
+  <button onclick="setAlert()">Save Alert</button>
+</div>
 
-<br><br>
+<div class="card">
+  <button onclick="spike()">⚡ Simulate Spike</button>
+</div>
 
-<button onclick="spike()">Simulate Spike</button>
+<div class="card">
+  <h3>📈 Temperature Graph</h3>
+  <canvas id="chart"></canvas>
+</div>
 
 <script>
-const API = "https://temp-log.onrender.com"; // CHANGE if needed
+const API = "https://temp-log.onrender.com";
 
-async function fetchTemp() {
-  const res = await fetch(API + "/api/temperature");
-  const data = await res.json();
+let chart;
+let labels = [];
+let dataPoints = [];
 
-  document.getElementById("temp").innerText =
-    "Temperature: " + data.temperature + " °C";
-}
+function initChart() {
+  const ctx = document.getElementById("chart");
 
-setInterval(fetchTemp, 1000);
-
-async function spike() {
-  await fetch(API + "/api/simulate-spike");
-}
-
-async function setAlert() {
-  const email = document.getElementById("email").value;
-  const threshold = document.getElementById("threshold").value;
-
-  await fetch(API + "/api/temperature/set-alert", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ email, threshold }),
+  chart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: labels,
+      datasets: [{
+        label: "Temperature",
+        data: dataPoints,
+        borderColor: "blue",
+        fill: false
+      }]
+    }
   });
-
-  alert("Alert saved");
-}
-</script>
-
-</body>
-</html>
