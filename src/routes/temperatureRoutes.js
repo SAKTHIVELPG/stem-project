@@ -27,6 +27,15 @@ function addTemperature(value) {
 // INITIAL VALUE
 addTemperature(latestTemperature);
 
+// 🔁 NORMAL TEMP FLUCTUATION (FIXED)
+setInterval(() => {
+  if (!isSpiking) {
+    const randomChange = (Math.random() * 2 - 1); // -1 to +1
+    latestTemperature = +(latestTemperature + randomChange).toFixed(1);
+    addTemperature(latestTemperature);
+  }
+}, 2000);
+
 // GET DATA
 router.get("/", (req, res) => {
   res.json({
@@ -47,6 +56,16 @@ router.post("/set-alert", (req, res) => {
   res.json({ message: "Alert set" });
 });
 
+// 🧪 TEST EMAIL ROUTE (NEW)
+router.get("/test-email", async (req, res) => {
+  if (!alertEmail) {
+    return res.json({ message: "Set email first" });
+  }
+
+  await sendAlertEmail(alertEmail, latestTemperature);
+  res.json({ message: "Test email sent" });
+});
+
 // SPIKE
 const simulateSpike = (req, res) => {
   if (isSpiking) {
@@ -60,6 +79,7 @@ const simulateSpike = (req, res) => {
     if (temp >= 80) {
       clearInterval(interval);
       isSpiking = false;
+      emailSent = false; // reset for next spike
       return;
     }
 
@@ -79,13 +99,5 @@ const simulateSpike = (req, res) => {
 
   res.json({ message: "Spike started" });
 };
-
-// COOL DOWN
-setInterval(() => {
-  if (!isSpiking && latestTemperature > 26.8) {
-    latestTemperature -= 1;
-    addTemperature(latestTemperature);
-  }
-}, 2000);
 
 module.exports = { router, simulateSpike };
