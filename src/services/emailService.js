@@ -10,16 +10,20 @@ const transporter = nodemailer.createTransport({
 
 const sendAlertEmail = async (to, temp) => {
   try {
-    await transporter.sendMail({
+    console.log("Sending email to:", to);
+    console.log("Using email:", process.env.EMAIL_USER);
+
+    const info = await transporter.sendMail({
       from: process.env.EMAIL_USER,
       to: to,
       subject: "🚨 Temperature Alert",
       text: `Temperature exceeded threshold!\nCurrent value: ${temp}°C`,
     });
 
-    console.log("Email sent to", to);
+    console.log("SUCCESS:", info.response);
+
   } catch (err) {
-    console.error("Email error:", err);
+    console.error("EMAIL FAILED:", err.message);
   }
 };
 
