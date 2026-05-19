@@ -1,118 +1,80 @@
 const express = require("express");
-const router = express.Router();
-const { sendAlertEmail } = require("../services/emailService");
 
-let latestTemperature = 26.8;
+const router = express.Router();
+
+let latestTemperature = null;
+
+let lastUpdated = null;
+
 let temperatureHistory = [];
 
-let isSpiking = false;
-
-// ALERT SETTINGS
-let alertEmail = "";
-let alertThreshold = 50;
-let emailSent = false;
-
-// STORE HISTORY
-function addTemperature(value) {
-  temperatureHistory.push({
-    value,
-    time: new Date(),
-  });
-
-  if (temperatureHistory.length > 20) {
-    temperatureHistory.shift();
-  }
-}
-
-// INITIAL VALUE
-addTemperature(latestTemperature);
-
-// 🔁 NORMAL TEMP FLUCTUATION (FIXED)
-setInterval(() => {
-  if (!isSpiking) {
-    const randomChange = (Math.random() * 2 - 1); // -1 to +1
-    latestTemperature = +(latestTemperature + randomChange).toFixed(1);
-    addTemperature(latestTemperature);
-  }
-}, 2000);
+// 🔥 ESP32 SENDS REAL DATA HERE
 
 router.post("/update", (req, res) => {
 
   const { temperature } = req.body;
 
+  if (temperature === undefined) {
+
+    return res.status(400).json({
+      error: "Temperature missing"
+    });
+
+  }
+
   latestTemperature = Number(temperature);
 
-  addTemperature(latestTemperature);
+  lastUpdated = Date.now();
 
-  console.log("REAL TEMP:", latestTemperature);
+  // SAVE HISTORY
+
+  temperatureHistory.push({
+
+    value: latestTemperature,
+
+    time: new Date()
+
+  });
+
+  // LIMIT GRAPH HISTORY
+
+  if (temperatureHistory.length > 20) {
+
+    temperatureHistory.shift();
+
+  }
+
+  console.log(
+    "REAL TEMP:",
+    latestTemperature
+  );
 
   res.json({
     success: true
   });
+
 });
 
-// GET DATA
+// 🔥 WEBSITE FETCHES DATA HERE
+
 router.get("/", (req, res) => {
+
+  const connected =
+    lastUpdated &&
+    (Date.now() - lastUpdated < 10000);
+
   res.json({
+
     temperature: latestTemperature,
+
     history: temperatureHistory,
-    status: "normal",
+
+    connected: connected,
+
+    lastUpdated: lastUpdated
+
   });
+
 });
 
-// SET ALERT
-router.post("/set-alert", (req, res) => {
-  const { email, threshold } = req.body;
-
-  alertEmail = email;
-  alertThreshold = Number(threshold);
-  emailSent = false;
-
-  res.json({ message: "Alert set" });
-});
-
-// 🧪 TEST EMAIL ROUTE (NEW)
-router.get("/test-email", async (req, res) => {
-  if (!alertEmail) {
-    return res.json({ message: "Set email first" });
-  }
-
-  await sendAlertEmail(alertEmail, latestTemperature);
-  res.json({ message: "Test email sent" });
-});
-
-// SPIKE
-const simulateSpike = (req, res) => {
-  if (isSpiking) {
-    return res.json({ message: "Already spiking" });
-  }
-
-  isSpiking = true;
-  let temp = latestTemperature;
-
-  const interval = setInterval(() => {
-    if (temp >= 80) {
-      clearInterval(interval);
-      isSpiking = false;
-      emailSent = false; // reset for next spike
-      return;
-    }
-
-    temp += 2;
-    latestTemperature = temp;
-    addTemperature(temp);
-
-    console.log("Temp:", temp);
-
-    if (temp >= alertThreshold && !emailSent && alertEmail) {
-      console.log("Sending email...");
-      sendAlertEmail(alertEmail, temp);
-      emailSent = true;
-    }
-
-  }, 1000);
-
-  res.json({ message: "Spike started" });
-};
-
-module.exports = { router, simulateSpike };
+module.exports = router;
