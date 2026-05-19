@@ -36,6 +36,21 @@ setInterval(() => {
   }
 }, 2000);
 
+router.post("/update", (req, res) => {
+
+  const { temperature } = req.body;
+
+  latestTemperature = Number(temperature);
+
+  addTemperature(latestTemperature);
+
+  console.log("REAL TEMP:", latestTemperature);
+
+  res.json({
+    success: true
+  });
+});
+
 // GET DATA
 router.get("/", (req, res) => {
   res.json({
