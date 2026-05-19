@@ -8,27 +8,29 @@ let lastUpdated = null;
 
 let temperatureHistory = [];
 
-// 🔥 RECEIVE REAL SENSOR DATA
+let wifiStatus = false;
+
+let sensorStatus = false;
+
+// RECEIVE SENSOR DATA
 
 router.post("/update", (req, res) => {
 
-  const { temperature } = req.body;
-
-  if (temperature === undefined) {
-
-    return res.status(400).json({
-      error: "Temperature missing"
-    });
-
-  }
+  const {
+    temperature,
+    wifi,
+    sensor
+  } = req.body;
 
   latestTemperature =
-    Number(temperature);
+  Number(temperature);
+
+  wifiStatus = wifi;
+
+  sensorStatus = sensor;
 
   lastUpdated =
-    Date.now();
-
-  // SAVE HISTORY
+  Date.now();
 
   temperatureHistory.push({
 
@@ -38,9 +40,9 @@ router.post("/update", (req, res) => {
 
   });
 
-  // LIMIT GRAPH SIZE
+  // LIMIT GRAPH HISTORY
 
-  if (temperatureHistory.length > 20) {
+  if(temperatureHistory.length > 20){
 
     temperatureHistory.shift();
 
@@ -52,32 +54,38 @@ router.post("/update", (req, res) => {
   );
 
   res.json({
-    success: true
+    success:true
   });
 
 });
 
-// 🔥 WEBSITE FETCHES DATA
+// SEND DATA TO WEBSITE
 
 router.get("/", (req, res) => {
 
   const connected =
-    lastUpdated &&
-    (Date.now() - lastUpdated < 10000);
+  lastUpdated &&
+  (Date.now() - lastUpdated < 10000);
 
   res.json({
 
     temperature:
-      latestTemperature,
+    latestTemperature,
 
     history:
-      temperatureHistory,
+    temperatureHistory,
 
     connected:
-      connected,
+    connected,
+
+    wifi:
+    wifiStatus,
+
+    sensor:
+    sensorStatus,
 
     lastUpdated:
-      lastUpdated
+    lastUpdated
 
   });
 
