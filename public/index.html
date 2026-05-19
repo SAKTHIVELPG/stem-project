@@ -15,7 +15,7 @@
   margin:0;
   padding:0;
   box-sizing:border-box;
-  font-family: 'Segoe UI', sans-serif;
+  font-family:'Segoe UI',sans-serif;
 }
 
 body{
@@ -33,7 +33,6 @@ body{
   min-height:100vh;
 
   padding:20px;
-
 }
 
 .container{
@@ -82,9 +81,12 @@ body{
 }
 
 .live-dot{
+
   width:12px;
   height:12px;
+
   border-radius:50%;
+
   background:#4ade80;
 
   box-shadow:0 0 12px #4ade80;
@@ -333,7 +335,7 @@ LIVE
 
 <div class="grid">
 
-<!-- MAIN TEMP -->
+<!-- TEMPERATURE -->
 
 <div class="card">
 
@@ -342,7 +344,7 @@ Current Temperature
 </div>
 
 <div class="temp" id="temperature">
--- °C
+--°C
 </div>
 
 <div id="statusBadge"
@@ -374,7 +376,7 @@ Alert Settings
 <div class="input-group">
 
 <label>
-Custom Threshold
+Custom Threshold Temperature
 </label>
 
 <input
@@ -395,7 +397,7 @@ Save Threshold
 
 </div>
 
-<!-- STATS -->
+<!-- MIN MAX -->
 
 <div class="stats">
 
@@ -443,6 +445,8 @@ let chart;
 
 let threshold = 50;
 
+let notificationSent = false;
+
 async function fetchTemperature(){
 
   try{
@@ -453,6 +457,32 @@ async function fetchTemperature(){
     const data =
     await res.json();
 
+    const badge =
+    document.getElementById(
+      "statusBadge"
+    );
+
+    // 🔥 DISCONNECTED
+
+    if(!data.connected){
+
+      badge.className =
+      "status disconnected";
+
+      badge.innerHTML =
+      '<div class="dot"></div> Disconnected';
+
+      return;
+    }
+
+    // 🔥 CONNECTED
+
+    badge.className =
+    "status connected";
+
+    badge.innerHTML =
+    '<div class="dot"></div> Connected';
+
     const temp =
     data.temperature;
 
@@ -461,26 +491,15 @@ async function fetchTemperature(){
     ).innerHTML =
     temp.toFixed(1) + "°C";
 
-    // STATUS
-
-    const badge =
-    document.getElementById(
-      "statusBadge"
-    );
-
-    badge.className =
-    "status connected";
-
-    badge.innerHTML =
-    '<div class="dot"></div> Connected';
-
     // UPDATED TIME
 
     document.getElementById(
       "updatedTime"
     ).innerHTML =
     "Last updated: "
-    + new Date().toLocaleTimeString();
+    + new Date(
+      data.lastUpdated
+    ).toLocaleTimeString();
 
     // GRAPH
 
@@ -491,23 +510,38 @@ async function fetchTemperature(){
     const values =
     data.history.map(h=>h.value);
 
-    document.getElementById(
-      "minTemp"
-    ).innerHTML =
-    Math.min(...values).toFixed(1)
-    + "°C";
+    if(values.length){
 
-    document.getElementById(
-      "maxTemp"
-    ).innerHTML =
-    Math.max(...values).toFixed(1)
-    + "°C";
+      document.getElementById(
+        "minTemp"
+      ).innerHTML =
+      Math.min(...values).toFixed(1)
+      + "°C";
+
+      document.getElementById(
+        "maxTemp"
+      ).innerHTML =
+      Math.max(...values).toFixed(1)
+      + "°C";
+
+    }
 
     // ALERT
 
-    if(temp >= threshold){
+    if(
+      temp >= threshold &&
+      !notificationSent
+    ){
 
       showNotification(temp);
+
+      notificationSent = true;
+
+    }
+
+    if(temp < threshold){
+
+      notificationSent = false;
 
     }
 
@@ -580,6 +614,8 @@ function updateGraph(history){
 
       responsive:true,
 
+      animation:true,
+
       plugins:{
 
         legend:{
@@ -639,7 +675,10 @@ function saveThreshold(){
 
 function showNotification(temp){
 
-  if(Notification.permission === "granted"){
+  if(
+    Notification.permission
+    === "granted"
+  ){
 
     new Notification(
 
@@ -660,7 +699,10 @@ function showNotification(temp){
 
 async function enableNotifications(){
 
-  if(Notification.permission !== "granted"){
+  if(
+    Notification.permission
+    !== "granted"
+  ){
 
     await Notification.requestPermission();
 
