@@ -1,141 +1,410 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Temperature Monitor</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+  <title>IoT Temperature Dashboard</title>
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
-    body {
-      font-family: Arial;
-      background: #0f172a;
-      color: white;
-      text-align: center;
-      padding: 20px;
+
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+      font-family:Arial, Helvetica, sans-serif;
     }
 
-    .card {
-      background: #1e293b;
-      padding: 20px;
-      margin: 15px auto;
-      border-radius: 10px;
-      width: 90%;
-      max-width: 400px;
+    body{
+      background:#0f172a;
+      color:white;
+      min-height:100vh;
+      padding:20px;
     }
 
-    input {
-      padding: 10px;
-      margin: 5px;
-      width: 80%;
-      border-radius: 5px;
-      border: none;
+    .container{
+      max-width:1200px;
+      margin:auto;
     }
 
-    button {
-      padding: 10px;
-      margin: 10px;
-      background: #3b82f6;
-      border: none;
-      color: white;
-      border-radius: 5px;
-      cursor: pointer;
+    .header{
+      margin-bottom:30px;
     }
 
-    canvas {
-      background: white;
-      border-radius: 10px;
+    .header h1{
+      font-size:40px;
+      font-weight:bold;
     }
+
+    .header p{
+      color:#94a3b8;
+      margin-top:8px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+      gap:20px;
+    }
+
+    .card{
+      background:#1e293b;
+      border-radius:20px;
+      padding:25px;
+      box-shadow:0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    .temp-value{
+      font-size:70px;
+      font-weight:bold;
+      margin-top:20px;
+      color:#38bdf8;
+    }
+
+    .status{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 16px;
+      border-radius:50px;
+      margin-top:20px;
+      font-weight:bold;
+    }
+
+    .connected{
+      background:#14532d;
+      color:#4ade80;
+    }
+
+    .disconnected{
+      background:#7f1d1d;
+      color:#f87171;
+    }
+
+    .dot{
+      width:12px;
+      height:12px;
+      border-radius:50%;
+      background:currentColor;
+    }
+
+    .graph-card{
+      margin-top:20px;
+    }
+
+    canvas{
+      margin-top:20px;
+    }
+
+    .settings{
+      margin-top:20px;
+    }
+
+    .input-group{
+      margin-top:20px;
+    }
+
+    label{
+      display:block;
+      margin-bottom:10px;
+      color:#cbd5e1;
+    }
+
+    input{
+      width:100%;
+      padding:14px;
+      border:none;
+      border-radius:12px;
+      background:#334155;
+      color:white;
+      font-size:16px;
+    }
+
+    button{
+      margin-top:20px;
+      width:100%;
+      padding:16px;
+      border:none;
+      border-radius:12px;
+      background:#0ea5e9;
+      color:white;
+      font-size:16px;
+      font-weight:bold;
+      cursor:pointer;
+      transition:0.3s;
+    }
+
+    button:hover{
+      background:#0284c7;
+    }
+
+    .footer{
+      margin-top:40px;
+      text-align:center;
+      color:#64748b;
+    }
+
   </style>
 </head>
 
 <body>
 
-<h1>🔥 IoT Temperature Monitor</h1>
+  <div class="container">
 
-<div class="card">
-  <h2 id="temp">Loading...</h2>
-</div>
+    <div class="header">
+      <h1>🌡 IoT Temperature Dashboard</h1>
+      <p>Real-time ESP32 temperature monitoring system</p>
+    </div>
 
-<div class="card">
-  <h3>📧 Alert Settings</h3>
-  <input id="email" placeholder="Enter Email">
-  <input id="threshold" placeholder="Threshold (e.g. 50)">
-  <br>
-  <button onclick="setAlert()">Save Alert</button>
-  <button onclick="testEmail()">🧪 Test Email</button>
-</div>
+    <div class="grid">
 
-<div class="card">
-  <button onclick="spike()">⚡ Simulate Spike</button>
-</div>
+      <!-- TEMPERATURE CARD -->
 
-<div class="card">
-  <h3>📈 Temperature Graph</h3>
-  <canvas id="chart"></canvas>
-</div>
+      <div class="card">
+
+        <h2>Live Temperature</h2>
+
+        <div class="temp-value" id="temperature">
+          -- °C
+        </div>
+
+        <div id="statusBadge" class="status disconnected">
+          <div class="dot"></div>
+          Disconnected
+        </div>
+
+      </div>
+
+      <!-- SETTINGS -->
+
+      <div class="card settings">
+
+        <h2>Alert Settings</h2>
+
+        <div class="input-group">
+          <label>Custom Threshold Temperature</label>
+
+          <input
+            type="number"
+            id="threshold"
+            value="50"
+          />
+        </div>
+
+        <button onclick="saveThreshold()">
+          Save Threshold
+        </button>
+
+      </div>
+
+    </div>
+
+    <!-- GRAPH -->
+
+    <div class="card graph-card">
+
+      <h2>Temperature Graph</h2>
+
+      <canvas id="tempChart"></canvas>
+
+    </div>
+
+    <div class="footer">
+      IoT Temperature Monitoring System
+    </div>
+
+  </div>
 
 <script>
-const API = "https://temp-log.onrender.com";
 
 let chart;
 
-function initChart() {
-  const ctx = document.getElementById("chart");
+let threshold = 50;
 
-  chart = new Chart(ctx, {
-    type: "line",
-    data: {
-      labels: [],
-      datasets: [{
-        label: "Temperature",
-        data: [],
-        borderColor: "blue",
-        fill: false
-      }]
+async function fetchTemperature(){
+
+  try{
+
+    const res =
+      await fetch('/api/temperature');
+
+    const data =
+      await res.json();
+
+    document.getElementById("temperature")
+      .innerHTML =
+      data.temperature.toFixed(1) + " °C";
+
+    // STATUS
+
+    const badge =
+      document.getElementById("statusBadge");
+
+    badge.className =
+      "status connected";
+
+    badge.innerHTML =
+      '<div class="dot"></div> Connected';
+
+    updateGraph(data.history);
+
+    // ALERT
+
+    if(data.temperature >= threshold){
+
+      showNotification(
+        data.temperature
+      );
     }
-  });
-}
 
-async function fetchTemp() {
-  const res = await fetch(API + "/api/temperature");
-  const data = await res.json();
+  }catch(err){
 
-  document.getElementById("temp").innerText =
-    "Temperature: " + data.temperature.toFixed(1) + " °C";
+    const badge =
+      document.getElementById("statusBadge");
 
-  if (data.history) {
-    chart.data.labels = data.history.map((_, i) => i);
-    chart.data.datasets[0].data = data.history.map(item => item.value);
-    chart.update();
+    badge.className =
+      "status disconnected";
+
+    badge.innerHTML =
+      '<div class="dot"></div> Disconnected';
+
   }
+
 }
 
-async function spike() {
-  await fetch(API + "/api/simulate-spike");
-}
+function updateGraph(history){
 
-async function setAlert() {
-  const email = document.getElementById("email").value;
-  const threshold = document.getElementById("threshold").value;
+  const labels =
+    history.map((_,i)=>i+1);
 
-  await fetch(API + "/api/temperature/set-alert", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
+  const values =
+    history.map(h=>h.value);
+
+  if(chart){
+    chart.destroy();
+  }
+
+  const ctx =
+    document.getElementById('tempChart');
+
+  chart = new Chart(ctx,{
+
+    type:'line',
+
+    data:{
+      labels:labels,
+
+      datasets:[{
+        label:'Temperature °C',
+
+        data:values,
+
+        borderColor:'#38bdf8',
+
+        backgroundColor:'rgba(56,189,248,0.2)',
+
+        fill:true,
+
+        tension:0.4,
+
+        pointRadius:3
+      }]
     },
-    body: JSON.stringify({ email, threshold })
+
+    options:{
+      responsive:true,
+
+      plugins:{
+        legend:{
+          labels:{
+            color:'white'
+          }
+        }
+      },
+
+      scales:{
+
+        x:{
+          ticks:{
+            color:'white'
+          },
+
+          grid:{
+            color:'#334155'
+          }
+        },
+
+        y:{
+          ticks:{
+            color:'white'
+          },
+
+          grid:{
+            color:'#334155'
+          }
+        }
+
+      }
+
+    }
+
   });
 
-  alert("Alert saved");
 }
 
-// 🧪 TEST EMAIL BUTTON
-async function testEmail() {
-  await fetch(API + "/api/temperature/test-email");
-  alert("Test email triggered");
+function saveThreshold(){
+
+  threshold =
+    Number(
+      document.getElementById(
+        "threshold"
+      ).value
+    );
+
+  alert(
+    "Threshold Saved: "
+    + threshold + "°C"
+  );
 }
 
-initChart();
-setInterval(fetchTemp, 1000);
+function showNotification(temp){
+
+  if(
+    Notification.permission
+    === "granted"
+  ){
+
+    new Notification(
+      "🚨 Temperature Alert",
+      {
+        body:
+          "Temperature reached "
+          + temp + "°C"
+      }
+    );
+
+  }
+
+}
+
+async function enableNotifications(){
+
+  if(Notification.permission !== "granted"){
+
+    await Notification.requestPermission();
+
+  }
+
+}
+
+enableNotifications();
+
+setInterval(fetchTemperature,2000);
+
+fetchTemperature();
+
 </script>
 
 </body>
