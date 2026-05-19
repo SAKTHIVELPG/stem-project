@@ -11,14 +11,10 @@ app.use(cors());
 
 app.use(express.json());
 
-// 🔥 MAIN ROUTE
-
 app.use(
   "/api/temperature",
   temperatureRoutes
 );
-
-// 🔥 WEBSITE
 
 app.use(
   express.static("public")
