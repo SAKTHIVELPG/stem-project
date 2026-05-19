@@ -8,7 +8,7 @@ let lastUpdated = null;
 
 let temperatureHistory = [];
 
-// 🔥 ESP32 SENDS REAL DATA HERE
+// 🔥 RECEIVE REAL SENSOR DATA
 
 router.post("/update", (req, res) => {
 
@@ -22,9 +22,11 @@ router.post("/update", (req, res) => {
 
   }
 
-  latestTemperature = Number(temperature);
+  latestTemperature =
+    Number(temperature);
 
-  lastUpdated = Date.now();
+  lastUpdated =
+    Date.now();
 
   // SAVE HISTORY
 
@@ -36,7 +38,7 @@ router.post("/update", (req, res) => {
 
   });
 
-  // LIMIT GRAPH HISTORY
+  // LIMIT GRAPH SIZE
 
   if (temperatureHistory.length > 20) {
 
@@ -55,7 +57,7 @@ router.post("/update", (req, res) => {
 
 });
 
-// 🔥 WEBSITE FETCHES DATA HERE
+// 🔥 WEBSITE FETCHES DATA
 
 router.get("/", (req, res) => {
 
@@ -65,13 +67,17 @@ router.get("/", (req, res) => {
 
   res.json({
 
-    temperature: latestTemperature,
+    temperature:
+      latestTemperature,
 
-    history: temperatureHistory,
+    history:
+      temperatureHistory,
 
-    connected: connected,
+    connected:
+      connected,
 
-    lastUpdated: lastUpdated
+    lastUpdated:
+      lastUpdated
 
   });
 
